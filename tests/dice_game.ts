@@ -52,20 +52,55 @@ describe("dice_game", () => {
   it("Place a bet", async () => {
     // Add your test here.
     let signature = await program.methods.placeBet(seed, 50, new BN(LAMPORTS_PER_SOL/100))
-    .accounts({
-      player: player.publicKey,
-      house: house.publicKey,
-    })
-    // .accountsPartial({
+    // .accounts({
     //   player: player.publicKey,
     //   house: house.publicKey,
-    //   vault,
-    //   bet,
-    //   systemProgram:SystemProgram.programId 
     // })
+    .accountsPartial({
+      player: player.publicKey,
+      house: house.publicKey,
+      vault,
+      bet,
+      systemProgram:SystemProgram.programId 
+    })
     .signers([
       player
     ])
     .rpc().then(confirmTx);
+  });
+
+  it("Resolve a bet", async () => {
+    let account = await anchor.getProvider().connection.getAccountInfo(bet, "confirmed");
+    let sig_ix = Ed25519Program.createInstructionWithPrivateKey({
+      privateKey: house.secretKey,
+      message: account.data.subarray(8)
+    });
+
+    const resolve_ix = await program.methods.resolveBet(Buffer.from(sig_ix.data.buffer.slice(16+32, 16+32+64))).accountsPartial({
+        player: player.publicKey,
+        house: house.publicKey,
+        vault,
+        bet,
+        instructionSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
+        systemProgram:SystemProgram.programId 
+      }
+    )
+    .signers([
+      house
+    ])
+    .instruction();
+
+    const tx = new Transaction().add(sig_ix).add(resolve_ix);
+
+    try {
+      await sendAndConfirmTransaction(
+        program.provider.connection,
+        tx,
+        [house]
+      );
+    } catch (error) {
+      console.error(error);
+      throw (error)
+    }
   });
 });

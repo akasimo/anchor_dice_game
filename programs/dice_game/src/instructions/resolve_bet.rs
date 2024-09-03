@@ -13,6 +13,9 @@ pub struct ResolveBet<'info> {
     pub house: Signer<'info>,
     
     /// CHECK : this is safe
+    #[account(
+        mut
+    )]
     pub player: UncheckedAccount<'info>,
 
     #[account(
@@ -58,9 +61,11 @@ impl<'info> ResolveBet<'info> {
 
         require_keys_eq!(signature.public_key.unwrap(), self.house.key(), DiceError::SignatureVerificationFailed);
         
-        require!(signature.signature.unwrap().eq(sig), DiceError::SignatureVerificationFailed);
+        // require!(signature.signature.unwrap().eq(sig), DiceError::SignatureVerificationFailed);
+        require!(&signature.signature.ok_or(DiceError::Ed25519Signature)?.eq(sig), DiceError::Ed25519Signature);
 
-        require!(signature.message.as_ref().unwrap().eq(&self.bet.to_slice()), DiceError::SignatureVerificationFailed);
+        // require!(signature.message.as_ref().unwrap().eq(&self.bet.to_slice()), DiceError::SignatureVerificationFailed);
+        require!(&signature.message.as_ref().ok_or(DiceError::Ed25519Signature)?.eq(&self.bet.to_slice()), DiceError::Ed25519Signature);
 
         Ok(())
     }

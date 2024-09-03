@@ -16,4 +16,7 @@ pub enum DiceError {
 
     #[msg("Ed25519 accounts error")]
     Ed25519Accounts,
+
+    #[msg("signature is not verifiable")]
+    Ed25519Signature
 }
