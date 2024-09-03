@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Bet {
     pub player: Pubkey,
-    pub seed: u64,
+    pub seed: u128,
     pub slot: u64,
     pub amount: u64,
     pub roll: u8,

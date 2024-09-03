@@ -28,7 +28,7 @@ describe("dice_game", () => {
   let player = new Keypair();
   let seed = new BN(randomBytes(16));
   let vault = PublicKey.findProgramAddressSync([Buffer.from("vault"), house.publicKey.toBuffer()], program.programId)[0];
-  let bet = PublicKey.findProgramAddressSync([Buffer.from("bet"), vault.toBuffer(), seed.toBuffer("le", 16)], program.programId)[0];
+  let bet = PublicKey.findProgramAddressSync([Buffer.from("bet"), vault.toBuffer(), player.publicKey.toBuffer(), seed.toBuffer("le", 16)], program.programId)[0];
   let signature: Uint8Array;
 
   it("Airdrop", async () => {
@@ -39,7 +39,7 @@ describe("dice_game", () => {
 
   it("Initialize", async () => {
     let signature = await program.methods.initialize(new BN(LAMPORTS_PER_SOL).mul(new BN(100)))
-      .accounts({
+      .accountsPartial({
       house: house.publicKey,
       vault,
       systemProgram: SystemProgram.programId,
@@ -48,4 +48,24 @@ describe("dice_game", () => {
     ])
     .rpc().then(confirmTx);
     });
+
+  it("Place a bet", async () => {
+    // Add your test here.
+    let signature = await program.methods.placeBet(seed, 50, new BN(LAMPORTS_PER_SOL/100))
+    .accounts({
+      player: player.publicKey,
+      house: house.publicKey,
+    })
+    // .accountsPartial({
+    //   player: player.publicKey,
+    //   house: house.publicKey,
+    //   vault,
+    //   bet,
+    //   systemProgram:SystemProgram.programId 
+    // })
+    .signers([
+      player
+    ])
+    .rpc().then(confirmTx);
+  });
 });
